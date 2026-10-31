@@ -7,7 +7,6 @@
 set -euo pipefail
 
 : "${GH_TOKEN:?GH_TOKEN is required}"
-: "${NODE_AUTH_TOKEN:?NODE_AUTH_TOKEN (npm token) is required}"
 BRANCH="${GITHUB_REF_NAME:-main}"
 
 if [ -z "$(find .changeset -name '*.md' ! -name 'README.md')" ]; then
