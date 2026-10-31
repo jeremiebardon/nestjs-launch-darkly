@@ -100,5 +100,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremiebardon/nestjs-launch-darkly.git"
   }
 }
