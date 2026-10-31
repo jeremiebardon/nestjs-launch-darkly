@@ -1,4 +1,4 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import { init } from '@launchdarkly/node-server-sdk';
 import {
   LAUNCH_DARKLY_CLIENT,
@@ -12,15 +12,28 @@ import {
 import { LaunchDarklyService } from './launch-darkly.service';
 
 const DEFAULT_INIT_TIMEOUT_SECONDS = 5;
+const logger = new Logger('LaunchDarklyModule');
 
 const clientProvider: Provider = {
   provide: LAUNCH_DARKLY_CLIENT,
   inject: [LAUNCH_DARKLY_OPTIONS],
   useFactory: async (options: LaunchDarklyModuleOptions) => {
     const client = init(options.sdkKey, options.ldOptions);
-    await client.waitForInitialization({
-      timeout: options.initTimeoutSeconds ?? DEFAULT_INIT_TIMEOUT_SECONDS,
-    });
+    try {
+      await client.waitForInitialization({
+        timeout: options.initTimeoutSeconds ?? DEFAULT_INIT_TIMEOUT_SECONDS,
+      });
+    } catch (err) {
+      if (options.throwOnInitError) {
+        client.close();
+        throw err;
+      }
+      logger.error(
+        `LaunchDarkly initialization failed, flags will use default values until connected: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
     return client;
   },
 };
@@ -36,7 +49,7 @@ export class LaunchDarklyModule {
         clientProvider,
         LaunchDarklyService,
       ],
-      exports: [LaunchDarklyService],
+      exports: [LaunchDarklyService, LAUNCH_DARKLY_OPTIONS],
     };
   }
 
@@ -50,7 +63,7 @@ export class LaunchDarklyModule {
         clientProvider,
         LaunchDarklyService,
       ],
-      exports: [LaunchDarklyService],
+      exports: [LaunchDarklyService, LAUNCH_DARKLY_OPTIONS],
     };
   }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { init } from '@launchdarkly/node-server-sdk';
 import { LaunchDarklyOptionsFactory } from './interfaces';
@@ -81,6 +81,34 @@ describe('LaunchDarklyModule', () => {
     expect(() => LaunchDarklyModule.forRootAsync({})).toThrow(
       /useFactory, useClass or useExisting/,
     );
+  });
+
+  it('logs and continues when initialization fails by default', async () => {
+    client.waitForInitialization.mockRejectedValue(new Error('timeout'));
+    const errorSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [LaunchDarklyModule.forRoot({ sdkKey: 'k' })],
+    }).compile();
+
+    expect(moduleRef.get(LaunchDarklyService)).toBeDefined();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('timeout'));
+    errorSpy.mockRestore();
+  });
+
+  it('rejects and closes the client when throwOnInitError is set', async () => {
+    client.waitForInitialization.mockRejectedValue(new Error('timeout'));
+
+    await expect(
+      Test.createTestingModule({
+        imports: [
+          LaunchDarklyModule.forRoot({ sdkKey: 'k', throwOnInitError: true }),
+        ],
+      }).compile(),
+    ).rejects.toThrow('timeout');
+    expect(client.close).toHaveBeenCalled();
   });
 
   it('closes the client when the app shuts down', async () => {

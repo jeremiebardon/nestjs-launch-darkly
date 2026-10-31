@@ -11,7 +11,9 @@ import { LAUNCH_DARKLY_CLIENT } from './launch-darkly.constants';
 
 @Injectable()
 export class LaunchDarklyService implements OnModuleDestroy {
-  constructor(@Inject(LAUNCH_DARKLY_CLIENT) private readonly client: LDClient) {}
+  constructor(
+    @Inject(LAUNCH_DARKLY_CLIENT) private readonly client: LDClient,
+  ) {}
 
   variation<T = LDFlagValue>(
     flagKey: string,
