@@ -86,16 +86,35 @@ LaunchDarklyModule.forRoot({
 @FeatureFlag('org-flag', { context: () => ({ kind: 'org', key: 'org-1' }) })
 ```
 
+## Requirements
+
+- NestJS **12** (the package is ESM, like NestJS 12) and Node.js >= 20.
+
 ## Contributing & releases
 
-- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit in a PR.
-- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR.
-- **Releases are automatic on merge to `main`** (`.github/workflows/release.yml`):
-  1. Merging a PR with changesets opens/updates a `chore: version packages` PR (bumps `package.json`, writes `CHANGELOG.md`).
-  2. Merging that PR builds and publishes the package to npm.
-- Required repository secret: `NPM_TOKEN` (npm automation token with publish rights). In repo settings, enable *Actions → Workflow permissions → Allow GitHub Actions to create and approve pull requests*.
+- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit of a pull request.
+- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR has none.
+- **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset.
+- **Release on merge to `main`** (`.github/workflows/release.yml`, `scripts/release.sh`): builds and tests, then, if changesets are pending, bumps the version and updates `CHANGELOG.md`, publishes to npm, pushes a `chore(release): vX.Y.Z` commit and the `vX.Y.Z` tag, and creates a GitHub release from the changelog. Without pending changesets nothing is published.
+
+### One-time GitHub setup
+
+- Add the repository secret `NPM_TOKEN` (npm automation token with publish rights).
+- The release job pushes to `main` with `GITHUB_TOKEN`, so `main` must allow that: if branch protection requires pull requests, either let GitHub Actions bypass it, or use a PAT/GitHub App token instead.
+
+## Automatic dependency updates
+
+- **Renovate** (`renovate.json`) opens PRs with conventional titles: `chore(deps)` for dev tooling, `fix(deps)` for runtime dependencies. NestJS packages, the Jest toolchain, other non-major dev tooling and GitHub Actions are each grouped into one PR. Peer ranges are never touched automatically.
+- **Claude reviews every Renovate PR** (`.github/workflows/claude-renovate-review.yml`): it reads the release notes, builds and runs the tests, fixes breakage caused by the update, adds a `patch` changeset when a runtime dependency changed, and comments a verdict ("Safe to merge" / "Safe after my fix" / "Needs human review"). It never merges or approves, and it can't edit workflows or release config.
+
+One-time setup:
+
+1. Install the [Renovate GitHub App](https://github.com/apps/renovate) on the repository.
+2. Install the [Claude GitHub App](https://github.com/apps/claude) on the repository.
+3. Add the repository secret `ANTHROPIC_API_KEY`.
 
 ## Scripts
 
 - `npm run build` – compile to `dist/`
-- `npm test` / `npm run test:cov` – Jest unit tests
+- `npm test` / `npm run test:cov` – Jest unit tests (ESM mode)
+- `npm run example` – run the live example in `examples/` (`PORT` configurable)

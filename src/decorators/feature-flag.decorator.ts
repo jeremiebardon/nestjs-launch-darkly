@@ -6,8 +6,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { LDContext } from '@launchdarkly/node-server-sdk';
-import { FEATURE_FLAG_METADATA } from '../launch-darkly.constants';
-import { FeatureFlagGuard } from '../guards/feature-flag.guard';
+import { FEATURE_FLAG_METADATA } from '../launch-darkly.constants.js';
+import { FeatureFlagGuard } from '../guards/feature-flag.guard.js';
 
 export interface FeatureFlagOptions {
   /** Value the flag must evaluate to for the route to be reachable. Defaults to `true`. */

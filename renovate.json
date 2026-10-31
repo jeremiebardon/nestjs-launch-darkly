@@ -1,0 +1,83 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "prConcurrentLimit": 5,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on monday"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Dev tooling is never shipped: chore(deps)",
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "Runtime dependencies change the shipped package: fix(deps) (also needs a changeset)",
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "Supported peer ranges are a compatibility decision, updated by hand",
+      "matchDepTypes": [
+        "peerDependencies"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Update all NestJS packages together",
+      "matchPackageNames": [
+        "/^@nestjs//"
+      ],
+      "groupName": "nestjs"
+    },
+    {
+      "description": "Update the Jest toolchain together",
+      "matchPackageNames": [
+        "jest",
+        "ts-jest",
+        "@jest/globals",
+        "/^@types/jest$/"
+      ],
+      "groupName": "jest"
+    },
+    {
+      "description": "Batch non-major dev tooling updates",
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "dev tooling (non-major)",
+      "matchPackageNames": [
+        "!/^@nestjs//",
+        "!jest",
+        "!ts-jest",
+        "!@jest/globals"
+      ]
+    },
+    {
+      "description": "Batch GitHub Actions updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github actions",
+      "semanticCommitType": "ci"
+    }
+  ]
+}
