@@ -25,7 +25,8 @@
     "prepare": "husky",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "npm run build && changeset publish"
+    "release": "npm run build && changeset publish",
+    "example": "ts-node examples/main.ts"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",
@@ -42,6 +43,7 @@
     "@commitlint/config-conventional": "^21.2.4",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.2.8",
     "@nestjs/testing": "^11.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^22.0.0",
@@ -52,6 +54,7 @@
     "rimraf": "^6.0.0",
     "rxjs": "^7.8.0",
     "ts-jest": "^29.2.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.0"
   },
   "jest": {
