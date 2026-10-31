@@ -3,13 +3,13 @@ import { init } from '@launchdarkly/node-server-sdk';
 import {
   LAUNCH_DARKLY_CLIENT,
   LAUNCH_DARKLY_OPTIONS,
-} from './launch-darkly.constants';
+} from './launch-darkly.constants.js';
 import {
   LaunchDarklyModuleAsyncOptions,
   LaunchDarklyModuleOptions,
   LaunchDarklyOptionsFactory,
-} from './interfaces';
-import { LaunchDarklyService } from './launch-darkly.service';
+} from './interfaces/index.js';
+import { LaunchDarklyService } from './launch-darkly.service.js';
 
 const DEFAULT_INIT_TIMEOUT_SECONDS = 5;
 const logger = new Logger('LaunchDarklyModule');

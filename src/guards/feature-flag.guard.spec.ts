@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   Controller,
   ExecutionContext,
@@ -6,9 +7,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { FeatureFlag } from '../decorators/feature-flag.decorator';
-import { LaunchDarklyService } from '../launch-darkly.service';
-import { defaultContextFactory, FeatureFlagGuard } from './feature-flag.guard';
+import { FeatureFlag } from '../decorators/feature-flag.decorator.js';
+import { LaunchDarklyService } from '../launch-darkly.service.js';
+import {
+  defaultContextFactory,
+  FeatureFlagGuard,
+} from './feature-flag.guard.js';
+type Mock = jest.Mock<(...args: any[]) => any>;
+const mockFn = (): Mock => jest.fn<(...args: any[]) => any>();
 
 @FeatureFlag('controller-flag')
 @Controller('test')
@@ -42,13 +48,13 @@ const buildExecutionContext = (
   }) as unknown as ExecutionContext;
 
 describe('FeatureFlagGuard', () => {
-  let variation: jest.Mock;
-  let contextFactory: jest.Mock;
+  let variation: Mock;
+  let contextFactory: Mock;
   let guard: FeatureFlagGuard;
 
   beforeEach(() => {
-    variation = jest.fn();
-    contextFactory = jest.fn();
+    variation = mockFn();
+    contextFactory = mockFn();
     guard = new FeatureFlagGuard(
       new Reflector(),
       { variation } as unknown as LaunchDarklyService,

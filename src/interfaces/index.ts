@@ -1,1 +1,1 @@
-export * from './launch-darkly-options.interface';
+export * from './launch-darkly-options.interface.js';

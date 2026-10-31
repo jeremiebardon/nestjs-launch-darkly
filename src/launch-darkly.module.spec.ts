@@ -1,25 +1,31 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { Injectable, Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { init } from '@launchdarkly/node-server-sdk';
-import { LaunchDarklyOptionsFactory } from './interfaces';
-import { LaunchDarklyModule } from './launch-darkly.module';
-import { LaunchDarklyService } from './launch-darkly.service';
+import type { LaunchDarklyOptionsFactory } from './interfaces/index.js';
 
-jest.mock('@launchdarkly/node-server-sdk', () => ({ init: jest.fn() }));
+type Mock = jest.Mock<(...args: any[]) => any>;
+const mockFn = (): Mock => jest.fn<(...args: any[]) => any>();
+
+// ESM: the SDK must be mocked before the module under test is imported.
+const initMock = mockFn();
+jest.unstable_mockModule('@launchdarkly/node-server-sdk', () => ({
+  init: initMock,
+}));
+const { LaunchDarklyModule } = await import('./launch-darkly.module.js');
+const { LaunchDarklyService } = await import('./launch-darkly.service.js');
 
 describe('LaunchDarklyModule', () => {
-  const initMock = init as unknown as jest.Mock;
   let client: {
-    waitForInitialization: jest.Mock;
-    flush: jest.Mock;
-    close: jest.Mock;
+    waitForInitialization: Mock;
+    flush: Mock;
+    close: Mock;
   };
 
   beforeEach(() => {
     client = {
-      waitForInitialization: jest.fn().mockResolvedValue(undefined),
-      flush: jest.fn().mockResolvedValue(undefined),
-      close: jest.fn(),
+      waitForInitialization: mockFn().mockResolvedValue(undefined),
+      flush: mockFn().mockResolvedValue(undefined),
+      close: mockFn(),
     };
     initMock.mockReset().mockReturnValue(client);
   });

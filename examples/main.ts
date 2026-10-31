@@ -5,7 +5,7 @@ import {
   FeatureFlag,
   LaunchDarklyModule,
   LaunchDarklyService,
-} from '../src';
+} from '../src/index.js';
 
 const FLAG = process.env.LD_FLAG_KEY ?? 'my-test-flag';
 
@@ -53,6 +53,6 @@ class AppModule {}
 (async () => {
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks(); // flushes + closes the LD client on SIGINT/SIGTERM
-  await app.listen(3000);
-  console.log(`Try: curl -H "x-user-id: me" localhost:3000/demo/guarded`);
+  await app.listen(Number(process.env.PORT ?? 3000));
+  console.log(`Try: curl -H "x-user-id: me" localhost:${process.env.PORT ?? 3000}/demo/guarded`);
 })();

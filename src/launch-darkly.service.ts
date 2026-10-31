@@ -7,7 +7,7 @@ import type {
   LDFlagsStateOptions,
   LDFlagValue,
 } from '@launchdarkly/node-server-sdk';
-import { LAUNCH_DARKLY_CLIENT } from './launch-darkly.constants';
+import { LAUNCH_DARKLY_CLIENT } from './launch-darkly.constants.js';
 
 @Injectable()
 export class LaunchDarklyService implements OnModuleDestroy {

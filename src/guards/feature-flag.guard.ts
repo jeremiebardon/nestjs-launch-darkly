@@ -7,13 +7,13 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { LDContext } from '@launchdarkly/node-server-sdk';
-import type { FeatureFlagMetadata } from '../decorators/feature-flag.decorator';
-import { LaunchDarklyModuleOptions } from '../interfaces';
+import type { FeatureFlagMetadata } from '../decorators/feature-flag.decorator.js';
+import { LaunchDarklyModuleOptions } from '../interfaces/index.js';
 import {
   FEATURE_FLAG_METADATA,
   LAUNCH_DARKLY_OPTIONS,
-} from '../launch-darkly.constants';
-import { LaunchDarklyService } from '../launch-darkly.service';
+} from '../launch-darkly.constants.js';
+import { LaunchDarklyService } from '../launch-darkly.service.js';
 
 /** Default context: a `user` context built from `request.user`, else anonymous. */
 export const defaultContextFactory = (

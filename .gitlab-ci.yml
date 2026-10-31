@@ -1,0 +1,78 @@
+stages:
+  - test
+  - release
+
+workflow:
+  rules:
+    # Merge request pipelines + pipelines on main only (no duplicate branch pipelines).
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+variables:
+  GIT_DEPTH: '0'
+  HUSKY: '0' # don't install git hooks in CI
+  npm_config_cache: $CI_PROJECT_DIR/.npm
+
+default:
+  image: node:22
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+
+# --- test ---------------------------------------------------------------
+
+test:
+  stage: test
+  image: node:$NODE_VERSION
+  parallel:
+    matrix:
+      - NODE_VERSION: ['20', '22']
+  script:
+    - npm ci --prefer-offline --no-audit
+    - npm run build
+    - npm run test:cov
+  coverage: '/All files[^|]*\|\s*([\d.]+)/'
+  artifacts:
+    when: always
+    paths:
+      - coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+
+commitlint:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - npm ci --prefer-offline --no-audit
+    - npx commitlint --from "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --to "$CI_COMMIT_SHA" --verbose
+
+# Warns (does not block) when a MR changes the package without a changeset.
+changeset-status:
+  stage: test
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - npm ci --prefer-offline --no-audit
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npx changeset status --since="origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+
+# --- release ------------------------------------------------------------
+
+# On every merge to main: if changesets are pending, bump the version, publish
+# to npm, push the release commit + tag, and create a GitLab release.
+# Required masked + protected CI/CD variables: NPM_TOKEN, GITLAB_RELEASE_TOKEN.
+release:
+  stage: release
+  resource_group: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_MESSAGE !~ /^chore\(release\)/
+  script:
+    - npm ci --prefer-offline --no-audit
+    - bash scripts/release.sh

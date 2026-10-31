@@ -1,25 +1,28 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { Test } from '@nestjs/testing';
-import { LAUNCH_DARKLY_CLIENT } from './launch-darkly.constants';
-import { LaunchDarklyService } from './launch-darkly.service';
+import { LAUNCH_DARKLY_CLIENT } from './launch-darkly.constants.js';
+import { LaunchDarklyService } from './launch-darkly.service.js';
+type Mock = jest.Mock<(...args: any[]) => any>;
+const mockFn = (): Mock => jest.fn<(...args: any[]) => any>();
 
 describe('LaunchDarklyService', () => {
   const context = { kind: 'user', key: 'user-1' };
   let service: LaunchDarklyService;
-  let client: Record<string, jest.Mock>;
+  let client: Record<string, Mock>;
 
   beforeEach(async () => {
     client = {
-      variation: jest.fn(),
-      boolVariation: jest.fn(),
-      stringVariation: jest.fn(),
-      numberVariation: jest.fn(),
-      jsonVariation: jest.fn(),
-      variationDetail: jest.fn(),
-      allFlagsState: jest.fn(),
-      track: jest.fn(),
-      identify: jest.fn(),
-      flush: jest.fn().mockResolvedValue(undefined),
-      close: jest.fn(),
+      variation: mockFn(),
+      boolVariation: mockFn(),
+      stringVariation: mockFn(),
+      numberVariation: mockFn(),
+      jsonVariation: mockFn(),
+      variationDetail: mockFn(),
+      allFlagsState: mockFn(),
+      track: mockFn(),
+      identify: mockFn(),
+      flush: mockFn().mockResolvedValue(undefined),
+      close: mockFn(),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -72,7 +75,7 @@ describe('LaunchDarklyService', () => {
   });
 
   it('delegates allFlagsState with options', async () => {
-    const state = { toJSON: jest.fn() };
+    const state = { toJSON: mockFn() };
     client.allFlagsState.mockResolvedValue(state);
 
     await expect(

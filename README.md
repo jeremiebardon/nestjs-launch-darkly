@@ -86,16 +86,30 @@ LaunchDarklyModule.forRoot({
 @FeatureFlag('org-flag', { context: () => ({ kind: 'org', key: 'org-1' }) })
 ```
 
+## Requirements
+
+- NestJS **12** (the package is ESM, like NestJS 12) and Node.js >= 20.
+
 ## Contributing & releases
 
-- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit in a PR.
-- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR.
-- **Releases are automatic on merge to `main`** (`.github/workflows/release.yml`):
-  1. Merging a PR with changesets opens/updates a `chore: version packages` PR (bumps `package.json`, writes `CHANGELOG.md`).
-  2. Merging that PR builds and publishes the package to npm.
-- Required repository secret: `NPM_TOKEN` (npm automation token with publish rights). In repo settings, enable *Actions → Workflow permissions → Allow GitHub Actions to create and approve pull requests*.
+- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and the GitLab pipeline checks every commit of a merge request.
+- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your MR. The pipeline warns when a MR has none.
+- **CI** (`.gitlab-ci.yml`): on merge requests and `main` it builds and runs the tests on Node 20 and 22 (with coverage).
+- **Release on merge to `main`** (`release` job, `scripts/release.sh`): if changesets are pending it bumps the version and updates `CHANGELOG.md`, publishes to npm, pushes a `chore(release): vX.Y.Z` commit and the `vX.Y.Z` tag, then creates a GitLab release from the changelog. Without pending changesets nothing is published.
+
+### One-time GitLab setup
+
+Add these in *Settings → CI/CD → Variables* (masked and protected):
+
+| Variable | Value |
+| --- | --- |
+| `NPM_TOKEN` | npm automation token with publish rights |
+| `GITLAB_RELEASE_TOKEN` | project access token, role Maintainer, scopes `api` + `write_repository` |
+
+Also allow that token's bot user to push to `main` (*Settings → Repository → Protected branches*) and to create `v*` tags (*Protected tags*).
 
 ## Scripts
 
 - `npm run build` – compile to `dist/`
-- `npm test` / `npm run test:cov` – Jest unit tests
+- `npm test` / `npm run test:cov` – Jest unit tests (ESM mode)
+- `npm run example` – run the live example in `examples/` (`PORT` configurable)
