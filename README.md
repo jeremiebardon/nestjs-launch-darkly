@@ -86,6 +86,15 @@ LaunchDarklyModule.forRoot({
 @FeatureFlag('org-flag', { context: () => ({ kind: 'org', key: 'org-1' }) })
 ```
 
+## Contributing & releases
+
+- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit in a PR.
+- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR.
+- **Releases are automatic on merge to `main`** (`.github/workflows/release.yml`):
+  1. Merging a PR with changesets opens/updates a `chore: version packages` PR (bumps `package.json`, writes `CHANGELOG.md`).
+  2. Merging that PR builds and publishes the package to npm.
+- Required repository secret: `NPM_TOKEN` (npm automation token with publish rights). In repo settings, enable *Actions → Workflow permissions → Allow GitHub Actions to create and approve pull requests*.
+
 ## Scripts
 
 - `npm run build` – compile to `dist/`
