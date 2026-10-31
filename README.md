@@ -92,21 +92,15 @@ LaunchDarklyModule.forRoot({
 
 ## Contributing & releases
 
-- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and the GitLab pipeline checks every commit of a merge request.
-- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your MR. The pipeline warns when a MR has none.
-- **CI** (`.gitlab-ci.yml`): on merge requests and `main` it builds and runs the tests on Node 20 and 22 (with coverage).
-- **Release on merge to `main`** (`release` job, `scripts/release.sh`): if changesets are pending it bumps the version and updates `CHANGELOG.md`, publishes to npm, pushes a `chore(release): vX.Y.Z` commit and the `vX.Y.Z` tag, then creates a GitLab release from the changelog. Without pending changesets nothing is published.
+- **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit of a pull request.
+- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR has none.
+- **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset.
+- **Release on merge to `main`** (`.github/workflows/release.yml`, `scripts/release.sh`): builds and tests, then, if changesets are pending, bumps the version and updates `CHANGELOG.md`, publishes to npm, pushes a `chore(release): vX.Y.Z` commit and the `vX.Y.Z` tag, and creates a GitHub release from the changelog. Without pending changesets nothing is published.
 
-### One-time GitLab setup
+### One-time GitHub setup
 
-Add these in *Settings → CI/CD → Variables* (masked and protected):
-
-| Variable | Value |
-| --- | --- |
-| `NPM_TOKEN` | npm automation token with publish rights |
-| `GITLAB_RELEASE_TOKEN` | project access token, role Maintainer, scopes `api` + `write_repository` |
-
-Also allow that token's bot user to push to `main` (*Settings → Repository → Protected branches*) and to create `v*` tags (*Protected tags*).
+- Add the repository secret `NPM_TOKEN` (npm automation token with publish rights).
+- The release job pushes to `main` with `GITHUB_TOKEN`, so `main` must allow that: if branch protection requires pull requests, either let GitHub Actions bypass it, or use a PAT/GitHub App token instead.
 
 ## Scripts
 
