@@ -31,16 +31,16 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # The release commit + tag are pushed to a protected main. The default
           # GITHUB_TOKEN cannot be added to a ruleset bypass list, so use a
           # fine-grained PAT (Contents: read/write) from a repo admin.
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
           cache: npm
           registry-url: https://registry.npmjs.org
       # Trusted publishing needs npm >= 11.5.1; Node 22 ships npm 10.
