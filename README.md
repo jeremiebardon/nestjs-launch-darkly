@@ -45,7 +45,7 @@ export class CheckoutService {
 }
 ```
 
-`LaunchDarklyService` exposes `variation`, `boolVariation`, `stringVariation`, `numberVariation`, `jsonVariation`, `variationDetail`, `allFlagsState`, `track`, `identify`, `flush` and `getClient()` (raw `LDClient`).
+The module is global by default (`isGlobal: false` to opt out), so `LaunchDarklyService` can be injected anywhere. It exposes `variation`, `boolVariation`, `stringVariation`, `numberVariation`, `jsonVariation`, `variationDetail`, `allFlagsState`, `track`, `identify`, `flush` and `getClient()` (raw `LDClient`). The raw client can also be injected with `@InjectLaunchDarklyClient()`.
 
 ## On controllers / routes (decorator)
 
@@ -86,6 +86,15 @@ LaunchDarklyModule.forRoot({
 @FeatureFlag('org-flag', { context: () => ({ kind: 'org', key: 'org-1' }) })
 ```
 
+## Project layout
+
+- `src/launch-darkly.module.ts` – `forRoot` / `forRootAsync` (options object, factory, `useClass` or `useExisting`); creates the shared `LDClient`.
+- `src/launch-darkly.service.ts` – `LaunchDarklyService`, a typed wrapper around the client; handles init timeout and flush-then-close on shutdown.
+- `src/decorators/` – `@FeatureFlag` and `@InjectLaunchDarklyClient`.
+- `src/guards/` – the guard behind `@FeatureFlag`.
+- `src/interfaces/` – module options and context factory types.
+- `examples/` – runnable app, see [examples/README.md](examples/README.md).
+
 ## Requirements
 
 - NestJS **12** (the package is ESM, like NestJS 12) and Node.js >= 20.
@@ -95,7 +104,7 @@ LaunchDarklyModule.forRoot({
 - **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit of a pull request.
 - **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR has none.
 - **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset.
-- **Release on merge to `main`** (`.github/workflows/release.yml`, [changesets/action](https://github.com/changesets/action)): `main` is protected, so releases go through a PR. When changesets are pending, the workflow opens/updates a `chore(release): version packages` PR (version bump + `CHANGELOG.md`). Merging that PR builds, tests, publishes to npm, tags `vX.Y.Z` and creates the GitHub release from the changelog.
+- **Release on merge to `main`** (`.github/workflows/release.yml`, [changesets/action](https://github.com/changesets/action)): `main` is protected, so releases go through a PR. When changesets are pending, the workflow opens/updates a `chore(release): version packages` PR (version bump + `CHANGELOG.md`). Merging that PR builds, tests and publishes to npm (trusted publishing, with provenance). A follow-up step in the same workflow then pushes the `vX.Y.Z` tag and creates the GitHub release from the changelog (it is idempotent and only runs once the version is on npm).
 
 ### One-time GitHub setup
 
@@ -105,14 +114,9 @@ LaunchDarklyModule.forRoot({
 
 ## Automatic dependency updates
 
-- **Renovate** (`renovate.json`) opens PRs with conventional titles: `chore(deps)` for dev tooling, `fix(deps)` for runtime dependencies. NestJS packages, the Jest toolchain, other non-major dev tooling and GitHub Actions are each grouped into one PR. Peer ranges are never touched automatically.
-- **Claude reviews every Renovate PR** (`.github/workflows/claude-renovate-review.yml`): it reads the release notes, builds and runs the tests, fixes breakage caused by the update, adds a `patch` changeset when a runtime dependency changed, and comments a verdict ("Safe to merge" / "Safe after my fix" / "Needs human review"). It never merges or approves, and it can't edit workflows or release config.
+- **Renovate** (`renovate.json`) opens PRs with conventional titles: `chore(deps)` for dev tooling, `fix(deps)` for runtime dependencies (add a changeset by hand when one changes the runtime). NestJS packages, the Jest toolchain, other non-major dev tooling and GitHub Actions are each grouped into one PR. Peer ranges are never touched automatically.
 
-One-time setup:
-
-1. Install the [Renovate GitHub App](https://github.com/apps/renovate) on the repository.
-2. Install the [Claude GitHub App](https://github.com/apps/claude) on the repository.
-3. Add the repository secret `ANTHROPIC_API_KEY`.
+One-time setup: install the [Renovate GitHub App](https://github.com/apps/renovate) on the repository.
 
 ## Scripts
 
