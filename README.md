@@ -106,13 +106,8 @@ LaunchDarklyModule.forRoot({
 ## Automatic dependency updates
 
 - **Renovate** (`renovate.json`) opens PRs with conventional titles: `chore(deps)` for dev tooling, `fix(deps)` for runtime dependencies. NestJS packages, the Jest toolchain, other non-major dev tooling and GitHub Actions are each grouped into one PR. Peer ranges are never touched automatically.
-- **Claude reviews every Renovate PR** (`.github/workflows/claude-renovate-review.yml`): it reads the release notes, builds and runs the tests, fixes breakage caused by the update, adds a `patch` changeset when a runtime dependency changed, and comments a verdict ("Safe to merge" / "Safe after my fix" / "Needs human review"). It never merges or approves, and it can't edit workflows or release config.
 
-One-time setup:
-
-1. Install the [Renovate GitHub App](https://github.com/apps/renovate) on the repository.
-2. Install the [Claude GitHub App](https://github.com/apps/claude) on the repository.
-3. Add the repository secret `ANTHROPIC_API_KEY`.
+One-time setup: install the [Renovate GitHub App](https://github.com/apps/renovate) on the repository.
 
 ## Scripts
 

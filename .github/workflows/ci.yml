@@ -49,7 +49,7 @@ jobs:
 
   # Warns (does not block) when a PR changes the package without a changeset.
   changeset-status:
-    # Renovate bumps are dev-only or get their changeset from the Claude review.
+    # Renovate bumps are skipped; add a changeset by hand when one changes the runtime.
     if: github.actor != 'renovate[bot]'
     runs-on: ubuntu-latest
     continue-on-error: true
