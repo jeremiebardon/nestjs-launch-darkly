@@ -44,6 +44,7 @@ jobs:
       - run: npm run build
       - run: npm test
       - uses: changesets/action@v1
+        id: changesets
         with:
           version: npm run version
           publish: npm run release
@@ -52,3 +53,25 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          NPM_CONFIG_PROVENANCE: 'true'
+      # @changesets/cli 3 no longer prints the "New tag:" lines changesets/action
+      # parses, so the action never pushes the tag nor creates the GitHub release.
+      # Do it here once the current version is on npm (idempotent).
+      - name: Tag and create GitHub release
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"; exit 0
+          fi
+          if [ "$(npm view "$NAME@$VERSION" version 2>/dev/null)" != "$VERSION" ]; then
+            echo "$NAME@$VERSION is not on npm, nothing to release"; exit 0
+          fi
+          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || git tag "$TAG"
+          git push origin "refs/tags/$TAG"
+          awk -v v="$VERSION" '/^## /{if(f)exit; if($2==v)f=1; next} f' CHANGELOG.md > release-notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --verify-tag
