@@ -47,7 +47,8 @@ jobs:
           --to ${{ github.event.pull_request.head.sha }}
           --verbose
 
-  # Warns (does not block) when a PR changes the package without a changeset.
+  # Warns (does not block) when a PR changes the published package (src/ or
+  # package.json) without a changeset. CI, docs and tooling changes are skipped.
   changeset-status:
     # Renovate bumps are skipped; add a changeset by hand when one changes the runtime.
     if: github.actor != 'renovate[bot]'
@@ -57,9 +58,17 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - id: scope
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '^(src/|package\.json$)'; then
+            echo "affects_package=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.scope.outputs.affects_package == 'true'
+        uses: actions/setup-node@v7
         with:
           node-version: 26
           cache: npm
-      - run: npm ci
-      - run: npx changeset status --since=origin/${{ github.base_ref }}
+      - if: steps.scope.outputs.affects_package == 'true'
+        run: npm ci
+      - if: steps.scope.outputs.affects_package == 'true'
+        run: npx changeset status --since=origin/${{ github.base_ref }}
