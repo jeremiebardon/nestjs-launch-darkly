@@ -1,5 +1,11 @@
 # nestjs-launch-darkly
 
+## 0.1.1
+
+### Patch Changes
+
+- 84c35a8: Maintenance release: update dev tooling (Jest 30, `@types/node` 26) and the release pipeline. No API changes.
+
 ## 0.1.0
 
 ### Minor Changes

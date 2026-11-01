@@ -1,6 +1,6 @@
 {
   "name": "nestjs-launch-darkly",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "NestJS module for the LaunchDarkly server-side SDK",
   "license": "MIT",
   "main": "./dist/index.js",
