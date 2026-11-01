@@ -43,7 +43,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - uses: changesets/action@v1
+      - uses: changesets/action@v2.1.2
         id: changesets
         with:
           version: npm run version
