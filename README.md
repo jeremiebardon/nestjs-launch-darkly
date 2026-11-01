@@ -95,12 +95,13 @@ LaunchDarklyModule.forRoot({
 - **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit of a pull request.
 - **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR has none.
 - **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset.
-- **Release on merge to `main`** (`.github/workflows/release.yml`, `scripts/release.sh`): builds and tests, then, if changesets are pending, bumps the version and updates `CHANGELOG.md`, publishes to npm, pushes a `chore(release): vX.Y.Z` commit and the `vX.Y.Z` tag, and creates a GitHub release from the changelog. Without pending changesets nothing is published.
+- **Release on merge to `main`** (`.github/workflows/release.yml`, [changesets/action](https://github.com/changesets/action)): `main` is protected, so releases go through a PR. When changesets are pending, the workflow opens/updates a `chore(release): version packages` PR (version bump + `CHANGELOG.md`). Merging that PR builds, tests, publishes to npm, tags `vX.Y.Z` and creates the GitHub release from the changelog.
 
 ### One-time GitHub setup
 
-- Add the repository secret `NPM_TOKEN` (npm automation token with publish rights).
-- The release job pushes to `main` with `GITHUB_TOKEN`, so `main` must allow that: if branch protection requires pull requests, either let GitHub Actions bypass it, or use a PAT/GitHub App token instead.
+- npm: add this repo's `release.yml` workflow as a Trusted Publisher in the package's npm settings (no token needed).
+- Repo Settings > Actions > General: enable **Allow GitHub Actions to create and approve pull requests**.
+- Optional: secret `RELEASE_TOKEN` (fine-grained PAT, Contents + Pull requests write) so CI runs on the version PR; PRs opened with `GITHUB_TOKEN` don't trigger workflows.
 
 ## Automatic dependency updates
 

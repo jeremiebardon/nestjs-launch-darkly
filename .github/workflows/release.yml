@@ -1,11 +1,15 @@
 name: Release
 
-# On every merge to main: build and test, then, if changesets are pending, bump
-# the version, publish to npm, push the release commit + tag and create a
-# GitHub release. Publishing to npm uses trusted publishing (OIDC): configure
-# this workflow as a Trusted Publisher on the package's npm settings page, no
-# npm token needed. RELEASE_TOKEN (a PAT allowed to bypass branch protection)
-# is needed if main is protected.
+# On every merge to main (changesets/action):
+#   - pending changesets -> opens/updates a "Version Packages" PR (version bump +
+#     CHANGELOG). main is protected, so nothing is pushed to it directly.
+#   - that PR merged (no pending changesets) -> builds, publishes to npm, tags
+#     vX.Y.Z and creates the GitHub release from the CHANGELOG.
+# npm publishing uses trusted publishing (OIDC): configure this workflow as a
+# Trusted Publisher in the package's npm settings, no npm token needed.
+# Repo setting required: Actions > "Allow GitHub Actions to create and approve
+# pull requests". Optional RELEASE_TOKEN (PAT) makes CI run on the version PR,
+# since PRs opened with GITHUB_TOKEN do not trigger workflows.
 on:
   push:
     branches: [main]
@@ -14,29 +18,20 @@ concurrency:
   group: release
   cancel-in-progress: false
 
-permissions:
-  contents: write
-
 env:
   HUSKY: '0'
 
 jobs:
   release:
-    # The release commit itself must not trigger another release.
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release)') }}
     runs-on: ubuntu-latest
-    # Job-level permissions replace the top-level ones, so contents is repeated.
-    # id-token lets npm trusted publishing (OIDC) authenticate the publish.
     permissions:
       contents: write
+      pull-requests: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # The release commit + tag are pushed to a protected main. The default
-          # GITHUB_TOKEN cannot be added to a ruleset bypass list, so use a
-          # fine-grained PAT (Contents: read/write) from a repo admin.
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
       - uses: actions/setup-node@v4
         with:
@@ -48,6 +43,12 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - run: bash scripts/release.sh
+      - uses: changesets/action@v1
+        with:
+          version: npm run version
+          publish: npm run release
+          commit: 'chore(release): version packages'
+          title: 'chore(release): version packages'
+          createGithubReleases: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
