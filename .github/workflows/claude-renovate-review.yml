@@ -40,12 +40,45 @@ jobs:
         with:
           node-version: 26
           cache: npm
+      # claude-code-action refuses to run on a PR that changes this workflow
+      # (and exits green), so flag those PRs for a human instead.
+      - name: Detect workflow changes
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh pr diff ${{ github.event.pull_request.number }} --name-only | grep -q '^\.github/workflows/'; then
+            echo "workflows=true" >> "$GITHUB_OUTPUT"
+            gh pr comment ${{ github.event.pull_request.number }} --body "**Claude review skipped:** this PR changes \`.github/workflows/\`, which the review action refuses to run on for security. **Needs human review.**"
+          else
+            echo "workflows=false" >> "$GITHUB_OUTPUT"
+          fi
+      # Prints the real API error (status + message, never the key) when the key,
+      # credit or model is wrong; the action itself only reports "is_error".
+      - name: Check Anthropic API access
+        if: steps.scope.outputs.workflows != 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is empty or not available to this workflow"
+            exit 1
+          fi
+          status=$(curl -s -o /tmp/resp.json -w '%{http_code}' https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d '{"model":"claude-sonnet-5-5","max_tokens":8,"messages":[{"role":"user","content":"ping"}]}')
+          echo "Anthropic API status: $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::Anthropic API rejected the request ($status): $(jq -r '.error.message // .' /tmp/resp.json)"
+            exit 1
+          fi
       - uses: anthropics/claude-code-action@v1
+        if: steps.scope.outputs.workflows != 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           allowed_bots: 'renovate[bot]'
-          # Print Claude's raw output so API/auth errors are visible in the log.
-          show_full_output: true
           claude_args: |
             --model claude-sonnet-5-5
             --max-turns 30
