@@ -20,6 +20,10 @@ One shared `LDClient` is created per module registration (as the SDK docs recomm
 export class AppModule {}
 ```
 
+**Enable shutdown hooks.** Pending events are flushed in `onModuleDestroy`, which Nest only runs on SIGTERM/SIGINT if you call `app.enableShutdownHooks()` in `main.ts`. Without it (e.g. a Kubernetes rollout), buffered events are lost.
+
+**Failure modes.** With `throwOnInitError: false` an init timeout or network error is logged and flags serve their defaults while the SDK keeps retrying. An invalid SDK key (401) is permanent: the SDK stops retrying and every flag stays on its default for the life of the process, so watch for the `LaunchDarkly initialization failed` log line.
+
 Async:
 
 ```ts
@@ -72,7 +76,11 @@ export class CheckoutController {
 
 ### Evaluation context
 
-By default the guard builds `{ kind: 'user', key }` from `request.user` (`key`, `id` or `sub`), falling back to an anonymous user. Override it globally or per route:
+By default the guard builds `{ kind: 'user', key }` from `request.user` (`key`, `id` or `sub`), falling back to an anonymous user. Nothing else from `request.user` is sent to LaunchDarkly; add attributes explicitly with a `contextFactory` (and mark sensitive ones with `privateAttributes`).
+
+Caveats: all unauthenticated requests share the key `anonymous`, so a percentage rollout gives them all the same result; supply a `contextFactory` with a per-visitor key if you need a real split. The default factory reads the HTTP request, so for GraphQL, microservice or WebSocket handlers provide your own `contextFactory`. With `isGlobal: false`, modules using `@FeatureFlag` must import the same `LaunchDarklyModule.forRoot(...)` registration.
+
+Override it globally or per route:
 
 ```ts
 LaunchDarklyModule.forRoot({

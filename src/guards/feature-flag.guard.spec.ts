@@ -74,7 +74,7 @@ describe('FeatureFlagGuard', () => {
     ).resolves.toBe(true);
     expect(variation).toHaveBeenCalledWith(
       'controller-flag',
-      { kind: 'user', key: '42', id: 42 },
+      { kind: 'user', key: '42' },
       false,
     );
   });
@@ -196,6 +196,14 @@ describe('defaultContextFactory', () => {
     expect(
       defaultContextFactory(ctxFor({ user: { key: 'k', id: 1 } })).key,
     ).toBe('k');
+  });
+
+  it('does not forward other request.user fields to LaunchDarkly', () => {
+    expect(
+      defaultContextFactory(
+        ctxFor({ user: { id: 1, email: 'a@b.c', roles: ['admin'], exp: 1 } }),
+      ),
+    ).toEqual({ kind: 'user', key: '1' });
   });
 
   it('keeps an explicit kind', () => {
