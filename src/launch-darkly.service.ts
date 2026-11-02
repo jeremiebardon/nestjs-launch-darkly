@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import type {
   LDClient,
   LDContext,
-  LDEvaluationDetail,
+  LDEvaluationDetailTyped,
   LDFlagsState,
   LDFlagsStateOptions,
   LDFlagValue,
@@ -63,8 +63,12 @@ export class LaunchDarklyService implements OnModuleDestroy {
     flagKey: string,
     context: LDContext,
     defaultValue: T,
-  ): Promise<LDEvaluationDetail> {
-    return this.client.variationDetail(flagKey, context, defaultValue);
+  ): Promise<LDEvaluationDetailTyped<T>> {
+    return this.client.variationDetail(
+      flagKey,
+      context,
+      defaultValue,
+    ) as Promise<LDEvaluationDetailTyped<T>>;
   }
 
   allFlagsState(
