@@ -46,11 +46,11 @@ jobs:
       - uses: changesets/action@v2.1.2
         id: changesets
         with:
-          version: npm run version
-          publish: npm run release
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
-          createGithubReleases: true
+          version-script: npm run version
+          publish-script: npm run release
+          commit-message: 'chore(release): version packages'
+          pr-title: 'chore(release): version packages'
+          create-github-releases: true
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           NPM_CONFIG_PROVENANCE: 'true'
@@ -58,7 +58,7 @@ jobs:
       # parses, so the action never pushes the tag nor creates the GitHub release.
       # Do it here once the current version is on npm (idempotent).
       - name: Tag and create GitHub release
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.has-changesets == 'false'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
         run: |

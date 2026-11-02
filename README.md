@@ -22,7 +22,17 @@ export class AppModule {}
 
 **Enable shutdown hooks.** Pending events are flushed in `onModuleDestroy`, which Nest only runs on SIGTERM/SIGINT if you call `app.enableShutdownHooks()` in `main.ts`. Without it (e.g. a Kubernetes rollout), buffered events are lost.
 
-**Failure modes.** With `throwOnInitError: false` an init timeout or network error is logged and flags serve their defaults while the SDK keeps retrying. An invalid SDK key (401) is permanent: the SDK stops retrying and every flag stays on its default for the life of the process, so watch for the `LaunchDarkly initialization failed` log line.
+SDK logs go through the Nest `Logger` (context `LaunchDarkly`) and follow your app's log levels; pass `ldOptions.logger` to use your own.
+
+**Failure modes.** With `throwOnInitError: false` an init timeout or network error is logged and flags serve their defaults while the SDK keeps retrying. An invalid SDK key (401) is permanent: the SDK stops retrying and every flag stays on its default for the life of the process, so watch for the `LaunchDarkly initialization failed` log line, or check `LaunchDarklyService.isInitialized()` in a health endpoint:
+
+```ts
+@Get('health')
+health() {
+  if (!this.ld.isInitialized()) throw new ServiceUnavailableException();
+  return { status: 'ok' };
+}
+```
 
 Async:
 
@@ -114,11 +124,17 @@ LaunchDarklyModule.forRoot({
 - **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset as above.
 - **Release on merge to `main`** (`.github/workflows/release.yml`, [changesets/action](https://github.com/changesets/action)): `main` is protected, so releases go through a PR. When changesets are pending, the workflow opens/updates a `chore(release): version packages` PR (version bump + `CHANGELOG.md`). Merging that PR builds, tests and publishes to npm (trusted publishing, with provenance). A follow-up step in the same workflow then pushes the `vX.Y.Z` tag and creates the GitHub release from the changelog (it is idempotent and only runs once the version is on npm).
 
+If the release job fails, check the run logs first: a breaking change in `changesets/action` (e.g. renamed inputs in v2) stops every release, and pending changesets simply stay on `main` until the workflow is fixed. Once it runs again, the next push to `main` (or re-running the failed job) opens the version PR with everything pending.
+
 ### One-time GitHub setup
 
 - npm: add this repo's `release.yml` workflow as a Trusted Publisher in the package's npm settings (no token needed).
 - Repo Settings > Actions > General: enable **Allow GitHub Actions to create and approve pull requests**.
 - Optional: secret `RELEASE_TOKEN` (fine-grained PAT, Contents + Pull requests write) so CI runs on the version PR; PRs opened with `GITHUB_TOKEN` don't trigger workflows.
+
+## License
+
+[MIT](LICENSE)
 
 ## Automatic dependency updates
 
@@ -129,5 +145,5 @@ One-time setup: install the [Renovate GitHub App](https://github.com/apps/renova
 ## Scripts
 
 - `npm run build` – compile to `dist/`
-- `npm test` / `npm run test:cov` – Jest unit tests (ESM mode)
+- `npm test` / `npm run test:cov` – Jest unit tests plus an integration spec that runs a real Nest app against the real SDK in test-data mode (ESM mode, no network)
 - `npm run example` – run the live example in `examples/` (`PORT` configurable)
