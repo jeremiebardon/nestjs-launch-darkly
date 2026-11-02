@@ -47,28 +47,32 @@ jobs:
           --to ${{ github.event.pull_request.head.sha }}
           --verbose
 
-  # Warns (does not block) when a PR changes the published package (src/ or
-  # package.json) without a changeset. CI, docs and tooling changes are skipped.
+  # Warns (does not block) when a PR changes the published package without a
+  # changeset, Renovate PRs included. Source and build config are matched by
+  # changedFilePatterns in .changeset/config.json; package.json is checked below.
   changeset-status:
-    # Renovate bumps are skipped; add a changeset by hand when one changes the runtime.
-    if: github.actor != 'renovate[bot]'
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      BASE_REF: ${{ github.base_ref }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - id: scope
-        run: |
-          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -qE '^(src/|package\.json$)'; then
-            echo "affects_package=true" >> "$GITHUB_OUTPUT"
-          fi
-      - if: steps.scope.outputs.affects_package == 'true'
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
           cache: npm
-      - if: steps.scope.outputs.affects_package == 'true'
-        run: npm ci
-      - if: steps.scope.outputs.affects_package == 'true'
-        run: npx changeset status --since=origin/${{ github.base_ref }}
+      - run: npm ci
+      - run: npx changeset status --since="origin/$BASE_REF"
+      # Dev tooling and the version bump of the release PR don't reach consumers.
+      - name: Check package.json fields that reach consumers
+        run: |
+          shipped='const { version, scripts, devDependencies, jest, ...rest } = JSON.parse(require("fs").readFileSync(0)); JSON.stringify(rest)'
+          before=$(git show "origin/$BASE_REF:package.json" | node -p "$shipped")
+          after=$(node -p "$shipped" < package.json)
+          added=$(git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" -- '.changeset/*.md')
+          if [ "$before" != "$after" ] && [ -z "$added" ]; then
+            echo "::error::package.json changes the published package but this PR has no changeset. Run npm run changeset."
+            exit 1
+          fi
