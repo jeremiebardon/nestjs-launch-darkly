@@ -115,13 +115,15 @@ LaunchDarklyModule.forRoot({
 
 ## Requirements
 
-- NestJS **12** (the package is ESM, like NestJS 12) and Node.js >= 20.
+- NestJS **11** or **12** (`@nestjs/common` / `@nestjs/core` peer range).
+- Node.js **>= 20** (`engines` in `package.json`).
+- This package is published as **ESM** (`"type": "module"`). Your app must be able to resolve ESM dependencies (straightforward on NestJS 12; NestJS 11 apps may need a compatible `module` / bundler setup).
 
 ## Contributing & releases
 
 - **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit of a pull request.
 - **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR without one changes the published package: non-test code in `src/`, the `tsconfig` files, or `package.json` fields other than `version`, `scripts`, `devDependencies` and `jest`. It can't catch other user-facing changes, such as docs.
-- **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset as above.
+- **CI** (`.github/workflows/ci.yml`): on pull requests it builds and runs the full test suite on Node 20 and 22 against NestJS 11 and 12, lints commit messages and checks for a changeset as above.
 - **Release on merge to `main`** (`.github/workflows/release.yml`, [changesets/action](https://github.com/changesets/action)): `main` is protected, so releases go through a PR. When changesets are pending, the workflow opens/updates a `chore(release): version packages` PR (version bump + `CHANGELOG.md`). Merging that PR builds, tests and publishes to npm (trusted publishing, with provenance). A follow-up step in the same workflow then pushes the `vX.Y.Z` tag and creates the GitHub release from the changelog (it is idempotent and only runs once the version is on npm).
 
 If the release job fails, check the run logs first: a breaking change in `changesets/action` (e.g. renamed inputs in v2) stops every release, and pending changesets simply stay on `main` until the workflow is fixed. Once it runs again, the next push to `main` (or re-running the failed job) opens the version PR with everything pending.
