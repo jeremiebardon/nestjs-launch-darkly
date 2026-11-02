@@ -1,5 +1,11 @@
 # nestjs-launch-darkly
 
+## 0.2.1
+
+### Patch Changes
+
+- f6c7e4e: Widen peer dependencies to support NestJS 11 and 12.
+
 ## 0.2.0
 
 ### Minor Changes
