@@ -15,7 +15,12 @@ import {
 } from '../launch-darkly.constants.js';
 import { LaunchDarklyService } from '../launch-darkly.service.js';
 
-/** Default context: a `user` context built from `request.user`, else anonymous. */
+/**
+ * Default context: a `user` context built from `request.user`, else anonymous.
+ * Only the key (and `kind`) is read from `request.user`: its other fields
+ * (email, roles, token claims...) are never sent to LaunchDarkly. Use a
+ * `contextFactory` to add attributes explicitly.
+ */
 export const defaultContextFactory = (
   executionContext: ExecutionContext,
 ): LDContext => {
@@ -25,7 +30,7 @@ export const defaultContextFactory = (
   if (key === undefined || key === null) {
     return { kind: 'user', key: 'anonymous', anonymous: true };
   }
-  return { ...user, kind: user.kind ?? 'user', key: String(key) };
+  return { kind: user.kind ?? 'user', key: String(key) };
 };
 
 @Injectable()
