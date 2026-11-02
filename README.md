@@ -13,7 +13,7 @@ One shared `LDClient` is created per module registration (as the SDK docs recomm
       sdkKey: process.env.LD_SDK_KEY!,
       initTimeoutSeconds: 10, // default 5
       throwOnInitError: false, // default: log and serve default values
-      ldOptions: {}, // any LDOptions (offline, plugins, ...)
+      ldOptions: {}, // any LDOptions (offline, plugins, logger, ...)
     }),
   ],
 })

@@ -30,6 +30,35 @@ describe('LaunchDarklyModule', () => {
     initMock.mockReset().mockReturnValue(client);
   });
 
+  it('routes SDK logs through the Nest logger by default', async () => {
+    const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    await Test.createTestingModule({
+      imports: [LaunchDarklyModule.forRoot({ sdkKey: 'k' })],
+    }).compile();
+
+    const { logger } = initMock.mock.calls[0][1] as {
+      logger: { warn: (...args: string[]) => void };
+    };
+    logger.warn('slow', 'connection');
+
+    expect(warn).toHaveBeenCalledWith('slow connection');
+    warn.mockRestore();
+  });
+
+  it('keeps a user-provided SDK logger', async () => {
+    const custom = { error() {}, warn() {}, info() {}, debug() {} };
+    await Test.createTestingModule({
+      imports: [
+        LaunchDarklyModule.forRoot({
+          sdkKey: 'k',
+          ldOptions: { logger: custom },
+        }),
+      ],
+    }).compile();
+
+    expect(initMock).toHaveBeenCalledWith('k', { logger: custom });
+  });
+
   it('forRoot initializes the SDK and provides the service', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -41,7 +70,10 @@ describe('LaunchDarklyModule', () => {
       ],
     }).compile();
 
-    expect(initMock).toHaveBeenCalledWith('sdk-key', { offline: true });
+    expect(initMock).toHaveBeenCalledWith('sdk-key', {
+      offline: true,
+      logger: expect.any(Object),
+    });
     expect(client.waitForInitialization).toHaveBeenCalledWith({ timeout: 2 });
     expect(moduleRef.get(LaunchDarklyService)).toBeInstanceOf(
       LaunchDarklyService,
@@ -65,7 +97,9 @@ describe('LaunchDarklyModule', () => {
       ],
     }).compile();
 
-    expect(initMock).toHaveBeenCalledWith('factory-key', undefined);
+    expect(initMock).toHaveBeenCalledWith('factory-key', {
+      logger: expect.any(Object),
+    });
   });
 
   it('forRootAsync supports useClass', async () => {
@@ -80,7 +114,9 @@ describe('LaunchDarklyModule', () => {
       imports: [LaunchDarklyModule.forRootAsync({ useClass: ConfigFactory })],
     }).compile();
 
-    expect(initMock).toHaveBeenCalledWith('class-key', undefined);
+    expect(initMock).toHaveBeenCalledWith('class-key', {
+      logger: expect.any(Object),
+    });
   });
 
   it('forRootAsync throws without a provider strategy', () => {

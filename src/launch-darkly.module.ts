@@ -1,5 +1,5 @@
 import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
-import { init } from '@launchdarkly/node-server-sdk';
+import { init, type LDLogger } from '@launchdarkly/node-server-sdk';
 import {
   LAUNCH_DARKLY_CLIENT,
   LAUNCH_DARKLY_OPTIONS,
@@ -14,11 +14,25 @@ import { LaunchDarklyService } from './launch-darkly.service.js';
 const DEFAULT_INIT_TIMEOUT_SECONDS = 5;
 const logger = new Logger('LaunchDarklyModule');
 
+/** Routes the SDK's own logs through the Nest logger (and its log levels). */
+const createSdkLogger = (): LDLogger => {
+  const sdkLogger = new Logger('LaunchDarkly');
+  return {
+    error: (...args) => sdkLogger.error(args.join(' ')),
+    warn: (...args) => sdkLogger.warn(args.join(' ')),
+    info: (...args) => sdkLogger.log(args.join(' ')),
+    debug: (...args) => sdkLogger.debug(args.join(' ')),
+  };
+};
+
 const clientProvider: Provider = {
   provide: LAUNCH_DARKLY_CLIENT,
   inject: [LAUNCH_DARKLY_OPTIONS],
   useFactory: async (options: LaunchDarklyModuleOptions) => {
-    const client = init(options.sdkKey, options.ldOptions);
+    const client = init(options.sdkKey, {
+      ...options.ldOptions,
+      logger: options.ldOptions?.logger ?? createSdkLogger(),
+    });
     try {
       await client.waitForInitialization({
         timeout: options.initTimeoutSeconds ?? DEFAULT_INIT_TIMEOUT_SECONDS,
