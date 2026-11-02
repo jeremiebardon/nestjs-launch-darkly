@@ -91,6 +91,14 @@ export class LaunchDarklyService implements OnModuleDestroy {
     return this.client.flush();
   }
 
+  /**
+   * Whether the SDK has connected to LaunchDarkly. While false, flags evaluate
+   * to their default values; use it in a health check or alert on it.
+   */
+  isInitialized(): boolean {
+    return this.client.initialized();
+  }
+
   /** Escape hatch for SDK features not wrapped by this service. */
   getClient(): LDClient {
     return this.client;

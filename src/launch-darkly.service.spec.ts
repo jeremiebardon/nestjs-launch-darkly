@@ -23,6 +23,7 @@ describe('LaunchDarklyService', () => {
       identify: mockFn(),
       flush: mockFn().mockResolvedValue(undefined),
       close: mockFn(),
+      initialized: mockFn(),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -92,6 +93,14 @@ describe('LaunchDarklyService', () => {
 
     expect(client.track).toHaveBeenCalledWith('event', context, { a: 1 }, 2);
     expect(client.identify).toHaveBeenCalledWith(context);
+  });
+
+  it('reports whether the SDK is initialized', () => {
+    client.initialized.mockReturnValue(false);
+    expect(service.isInitialized()).toBe(false);
+
+    client.initialized.mockReturnValue(true);
+    expect(service.isInitialized()).toBe(true);
   });
 
   it('exposes the raw client', () => {

@@ -45,7 +45,7 @@ export class CheckoutService {
 }
 ```
 
-The module is global by default (`isGlobal: false` to opt out), so `LaunchDarklyService` can be injected anywhere. It exposes `variation`, `boolVariation`, `stringVariation`, `numberVariation`, `jsonVariation`, `variationDetail`, `allFlagsState`, `track`, `identify`, `flush` and `getClient()` (raw `LDClient`). The raw client can also be injected with `@InjectLaunchDarklyClient()`.
+The module is global by default (`isGlobal: false` to opt out), so `LaunchDarklyService` can be injected anywhere. It exposes `variation`, `boolVariation`, `stringVariation`, `numberVariation`, `jsonVariation`, `variationDetail`, `allFlagsState`, `track`, `identify`, `flush`, `isInitialized()` and `getClient()` (raw `LDClient`). The raw client can also be injected with `@InjectLaunchDarklyClient()`.
 
 ## On controllers / routes (decorator)
 
