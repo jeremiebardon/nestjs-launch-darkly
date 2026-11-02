@@ -88,8 +88,8 @@ LaunchDarklyModule.forRoot({
 
 ## Project layout
 
-- `src/launch-darkly.module.ts` – `forRoot` / `forRootAsync` (options object, factory, `useClass` or `useExisting`); creates the shared `LDClient`.
-- `src/launch-darkly.service.ts` – `LaunchDarklyService`, a typed wrapper around the client; handles init timeout and flush-then-close on shutdown.
+- `src/launch-darkly.module.ts` – `forRoot` / `forRootAsync` (options object, factory, `useClass` or `useExisting`); creates the shared `LDClient` and handles the init timeout.
+- `src/launch-darkly.service.ts` – `LaunchDarklyService`, a typed wrapper around the client; handles flush-then-close on shutdown.
 - `src/decorators/` – `@FeatureFlag` and `@InjectLaunchDarklyClient`.
 - `src/guards/` – the guard behind `@FeatureFlag`.
 - `src/interfaces/` – module options and context factory types.
@@ -102,8 +102,8 @@ LaunchDarklyModule.forRoot({
 ## Contributing & releases
 
 - **Commits** must follow [Conventional Commits](https://www.conventionalcommits.org) (`feat: ...`, `fix: ...`, `docs: ...`). A `commit-msg` hook (husky + commitlint) enforces it locally and CI checks every commit of a pull request.
-- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR has none.
-- **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset.
+- **Versioning** uses [Changesets](https://github.com/changesets/changesets). For any user-facing change run `npm run changeset` and commit the generated file with your PR. CI warns when a PR without one changes the published package: non-test code in `src/`, the `tsconfig` files, or `package.json` fields other than `version`, `scripts`, `devDependencies` and `jest`. It can't catch other user-facing changes, such as docs.
+- **CI** (`.github/workflows/ci.yml`): on pull requests it builds and tests on Node 20 and 22, lints commit messages and checks for a changeset as above.
 - **Release on merge to `main`** (`.github/workflows/release.yml`, [changesets/action](https://github.com/changesets/action)): `main` is protected, so releases go through a PR. When changesets are pending, the workflow opens/updates a `chore(release): version packages` PR (version bump + `CHANGELOG.md`). Merging that PR builds, tests and publishes to npm (trusted publishing, with provenance). A follow-up step in the same workflow then pushes the `vX.Y.Z` tag and creates the GitHub release from the changelog (it is idempotent and only runs once the version is on npm).
 
 ### One-time GitHub setup
@@ -114,7 +114,7 @@ LaunchDarklyModule.forRoot({
 
 ## Automatic dependency updates
 
-- **Renovate** (`renovate.json`) opens PRs with conventional titles: `chore(deps)` for dev tooling, `fix(deps)` for runtime dependencies (add a changeset by hand when one changes the runtime). NestJS packages, the Jest toolchain, other non-major dev tooling and GitHub Actions are each grouped into one PR. Peer ranges are never touched automatically.
+- **Renovate** (`renovate.json`) opens PRs with conventional titles: `chore(deps)` for dev tooling, `fix(deps)` for runtime dependencies (CI warns until you add a changeset by hand). NestJS packages, the Jest toolchain, other non-major dev tooling and GitHub Actions are each grouped into one PR. Peer ranges are never touched automatically.
 
 One-time setup: install the [Renovate GitHub App](https://github.com/apps/renovate) on the repository.
 
